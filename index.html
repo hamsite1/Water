@@ -17,8 +17,12 @@ form { padding:20px; }
 .section-title { color:var(--primary); font-weight:bold; margin-bottom:10px; display:block; }
 .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px; }
 input { padding:8px; border:1px solid #ccc; border-radius:4px; font-size:14px; }
-.submit-btn { width:100%; padding:16px; background:var(--success); color:#fff; border:none; border-radius:8px; font-size:1.1rem; font-weight:bold; cursor:pointer; }
-.submit-btn:disabled{ opacity:.7; cursor:not-allowed; }
+.btn { width:100%; padding:16px; border:none; border-radius:8px; font-size:1.1rem; font-weight:bold; cursor:pointer; color:#fff; }
+.btn:disabled{ opacity:.7; cursor:not-allowed; }
+.btn-save { background:var(--success); }
+.btn-download { background:var(--primary); }
+.btn-share { background:#5f6368; }
+.actions { margin-top:10px; display:flex; gap:10px; }
 #status { display:none; margin-top:10px; padding:10px; text-align:center; border-radius:5px; font-weight:bold; }
 </style>
 </head>
@@ -86,7 +90,13 @@ input { padding:8px; border:1px solid #ccc; border-radius:4px; font-size:14px; }
       </div>
     </div>
 
-    <button class="submit-btn" id="saveBtn">Enregistrer</button>
+    <button class="btn btn-save" id="saveBtn">Enregistrer</button>
+
+    <div class="actions">
+      <button type="button" class="btn btn-download" onclick="downloadData()">⬇️ تحميل</button>
+      <button type="button" class="btn btn-share" onclick="shareData()">📤 مشاركة</button>
+    </div>
+
     <div id="status"></div>
   </form>
 
@@ -101,54 +111,109 @@ function setSheet(name, btn){
   btn.classList.add('active');
 }
 
+function showStatus(msg, bg){
+  const status = document.getElementById('status');
+  status.style.display = 'block';
+  status.style.background = bg;
+  status.innerText = msg;
+}
+
+function currentTabUrl(){
+  const sheet = document.getElementById('sheetInput').value;
+  return `${SHEETBEST_BASE}/tabs/${encodeURIComponent(sheet)}`;
+}
+
+/* ===== إرسال البيانات ===== */
 document.getElementById('waterForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
   const btn = document.getElementById('saveBtn');
-  const status = document.getElementById('status');
-  const sheet = document.getElementById('sheetInput').value;
-
   btn.disabled = true;
-  status.style.display = 'block';
-  status.style.background = '#e8f0fe';
-  status.innerText = 'Envoi...';
+
+  showStatus('Envoi...', '#e8f0fe');
 
   const formData = new FormData(e.target);
   const data = Object.fromEntries(formData.entries());
 
-  // لا نرسل هذا الحقل لأنه ليس عمودًا في الشيت
+  // لا نرسل هذا لأنه ليس عمودًا
   delete data.sheetInput;
 
-  // Endpoint الخاص بالورقة (Tab)
-  const url = `${SHEETBEST_BASE}/tabs/${encodeURIComponent(sheet)}`;
-
   try {
-    const res = await fetch(url, {
+    const res = await fetch(currentTabUrl(), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data) // ✅ Sheet.Best يتوقع object مباشر
+      body: JSON.stringify(data)
     });
 
     const text = await res.text();
-
     if (!res.ok) {
-      status.style.background = '#f8d7da';
-      status.innerText = `❌ Erreur (${res.status}) : ${text}`;
+      showStatus(`❌ Erreur (${res.status}) : ${text}`, '#f8d7da');
       return;
     }
 
-    status.style.background = '#d4edda';
-    status.innerText = '✅ تم الحفظ بنجاح';
+    showStatus('✅ تم الحفظ بنجاح', '#d4edda');
     e.target.reset();
 
   } catch (err) {
-    status.style.background = '#f8d7da';
-    status.innerText = '❌ Erreur réseau';
     console.error(err);
+    showStatus('❌ Erreur réseau', '#f8d7da');
   } finally {
     btn.disabled = false;
   }
 });
+
+/* ===== تحميل CSV ===== */
+async function downloadData(){
+  showStatus('تحميل البيانات...', '#e8f0fe');
+  try {
+    const res = await fetch(currentTabUrl());
+    const json = await res.json();
+
+    if (!Array.isArray(json) || json.length === 0) {
+      showStatus('لا توجد بيانات للتحميل', '#fff3cd');
+      return;
+    }
+
+    const headers = Object.keys(json[0]);
+    const rows = json.map(row =>
+      headers.map(h => `"${(row[h] ?? "").toString().replace(/"/g,'""')}"`).join(",")
+    );
+
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+
+    const sheet = document.getElementById('sheetInput').value;
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `${sheet}_data.csv`;
+    a.click();
+
+    showStatus('✅ تم تحميل الملف', '#d4edda');
+  } catch (e) {
+    showStatus('❌ خطأ أثناء التحميل', '#f8d7da');
+  }
+}
+
+/* ===== مشاركة (Android) ===== */
+async function shareData(){
+  if (!navigator.share) {
+    showStatus('❌ المشاركة غير مدعومة على هذا الجهاز', '#f8d7da');
+    return;
+  }
+
+  const sheet = document.getElementById('sheetInput').value;
+
+  try {
+    await navigator.share({
+      title: "Résultats Physico-Chimiques",
+      text: `مشاركة صفحة الإدخال - ${sheet}`,
+      url: location.href
+    });
+    showStatus('✅ تم فتح المشاركة', '#d4edda');
+  } catch (e) {
+    showStatus('تم إلغاء المشاركة', '#fff3cd');
+  }
+}
 </script>
 
 </body>
