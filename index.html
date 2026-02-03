@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Saisie Physico-Chimique 2025</title>
 
+<!-- ✅ مكتبة إنشاء Excel -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
 <style>
 :root { --primary:#1a73e8; --success:#1e8e3e; }
 body { font-family: Arial, sans-serif; background:#f1f3f4; margin:0; padding:10px; }
@@ -93,8 +96,8 @@ input { padding:8px; border:1px solid #ccc; border-radius:4px; font-size:14px; }
     <button class="btn btn-save" id="saveBtn">Enregistrer</button>
 
     <div class="actions">
-      <button type="button" class="btn btn-download" onclick="downloadData()">⬇️ تحميل</button>
-      <button type="button" class="btn btn-share" onclick="shareData()">📤 مشاركة</button>
+      <button type="button" class="btn btn-download" onclick="downloadExcel()">⬇️ تحميل Excel</button>
+      <button type="button" class="btn btn-share" onclick="shareExcelFile()">📤 مشاركة Excel</button>
     </div>
 
     <div id="status"></div>
@@ -129,13 +132,10 @@ document.getElementById('waterForm').addEventListener('submit', async (e) => {
 
   const btn = document.getElementById('saveBtn');
   btn.disabled = true;
-
   showStatus('Envoi...', '#e8f0fe');
 
   const formData = new FormData(e.target);
   const data = Object.fromEntries(formData.entries());
-
-  // لا نرسل هذا لأنه ليس عمودًا
   delete data.sheetInput;
 
   try {
@@ -162,59 +162,90 @@ document.getElementById('waterForm').addEventListener('submit', async (e) => {
   }
 });
 
-/* ===== تحميل CSV ===== */
-async function downloadData(){
-  showStatus('تحميل البيانات...', '#e8f0fe');
-  try {
-    const res = await fetch(currentTabUrl());
-    const json = await res.json();
+/* ===== بناء ملف Excel كـ Blob ===== */
+async function buildExcelBlob(){
+  const res = await fetch(currentTabUrl());
+  const json = await res.json();
 
-    if (!Array.isArray(json) || json.length === 0) {
+  if (!Array.isArray(json) || json.length === 0) {
+    throw new Error("EMPTY");
+  }
+
+  const sheetName = document.getElementById('sheetInput').value;
+
+  const ws = XLSX.utils.json_to_sheet(json);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+
+  const arrayBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+  return new Blob([arrayBuffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  });
+}
+
+/* ===== تحميل Excel ===== */
+async function downloadExcel(){
+  showStatus('تحميل Excel...', '#e8f0fe');
+  try{
+    const blob = await buildExcelBlob();
+    const sheetName = document.getElementById('sheetInput').value;
+
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `${sheetName}_data.xlsx`;
+    a.click();
+
+    showStatus('✅ تم تحميل ملف Excel', '#d4edda');
+  } catch(e){
+    if (e.message === "EMPTY") {
       showStatus('لا توجد بيانات للتحميل', '#fff3cd');
       return;
     }
-
-    const headers = Object.keys(json[0]);
-    const rows = json.map(row =>
-      headers.map(h => `"${(row[h] ?? "").toString().replace(/"/g,'""')}"`).join(",")
-    );
-
-    const csv = [headers.join(","), ...rows].join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-
-    const sheet = document.getElementById('sheetInput').value;
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `${sheet}_data.csv`;
-    a.click();
-
-    showStatus('✅ تم تحميل الملف', '#d4edda');
-  } catch (e) {
+    console.error(e);
     showStatus('❌ خطأ أثناء التحميل', '#f8d7da');
   }
 }
 
-/* ===== مشاركة (Android) ===== */
-async function shareData(){
-  if (!navigator.share) {
-    showStatus('❌ المشاركة غير مدعومة على هذا الجهاز', '#f8d7da');
-    return;
-  }
+/* ===== مشاركة ملف Excel نفسه ===== */
+async function shareExcelFile(){
+  const sheetName = document.getElementById('sheetInput').value;
 
-  const sheet = document.getElementById('sheetInput').value;
+  try{
+    showStatus('تحضير ملف Excel للمشاركة...', '#e8f0fe');
 
-  try {
-    await navigator.share({
-      title: "Résultats Physico-Chimiques",
-      text: `مشاركة صفحة الإدخال - ${sheet}`,
-      url: location.href
-    });
-    showStatus('✅ تم فتح المشاركة', '#d4edda');
-  } catch (e) {
-    showStatus('تم إلغاء المشاركة', '#fff3cd');
+    const blob = await buildExcelBlob();
+    const file = new File([blob], `${sheetName}_data.xlsx`, { type: blob.type });
+
+    // ✅ مشاركة ملف (Android/Chrome يدعمها غالباً)
+    if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
+      await navigator.share({
+        title: "Résultats Physico-Chimiques",
+        text: `ملف Excel - ${sheetName}`,
+        files: [file]
+      });
+      showStatus('✅ تم فتح المشاركة', '#d4edda');
+      return;
+    }
+
+    // ❌ إذا الجهاز لا يدعم مشاركة الملفات: ننزله بدلًا من ذلك
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `${sheetName}_data.xlsx`;
+    a.click();
+
+    showStatus('⚠️ جهازك لا يدعم مشاركة الملف مباشرة، تم تنزيله بدلًا من ذلك', '#fff3cd');
+
+  } catch(e){
+    if (e.message === "EMPTY") {
+      showStatus('لا توجد بيانات للمشاركة', '#fff3cd');
+      return;
+    }
+    console.error(e);
+    showStatus('❌ فشل إنشاء/مشاركة الملف', '#f8d7da');
   }
 }
 </script>
 
 </body>
 </html>
+```0
