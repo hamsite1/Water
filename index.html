@@ -1,244 +1,230 @@
-<!DOCTYPE html>
-<html lang="fr" dir="ltr">
+<!doctype html>
+<html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Saisie Physico-Chimique 2025</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>استيراد Excel + إدخال بيانات</title>
 
-<!-- ✅ مكتبة إنشاء Excel -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- SheetJS (XLSX) من CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-<style>
-:root { --primary:#1a73e8; --success:#1e8e3e; }
-body { font-family: Arial, sans-serif; background:#f1f3f4; margin:0; padding:10px; }
-.container { max-width:900px; margin:auto; background:#fff; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,.1); overflow:hidden; }
-.tabs { display:flex; border-bottom:1px solid #ddd; }
-.tab-btn { flex:1; padding:14px; border:none; background:#f8f9fa; font-weight:bold; cursor:pointer; }
-.tab-btn.active { background:#fff; color:var(--primary); border-bottom:3px solid var(--primary); }
-form { padding:20px; }
-.section { margin-bottom:20px; border:1px solid #ddd; border-radius:8px; padding:15px; }
-.section-title { color:var(--primary); font-weight:bold; margin-bottom:10px; display:block; }
-.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px; }
-input { padding:8px; border:1px solid #ccc; border-radius:4px; font-size:14px; }
-.btn { width:100%; padding:16px; border:none; border-radius:8px; font-size:1.1rem; font-weight:bold; cursor:pointer; color:#fff; }
-.btn:disabled{ opacity:.7; cursor:not-allowed; }
-.btn-save { background:var(--success); }
-.btn-download { background:var(--primary); }
-.btn-share { background:#5f6368; }
-.actions { margin-top:10px; display:flex; gap:10px; }
-#status { display:none; margin-top:10px; padding:10px; text-align:center; border-radius:5px; font-weight:bold; }
-</style>
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial; margin: 16px; }
+    .bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+    button { padding: 8px 12px; cursor: pointer; }
+    input[type="file"] { padding: 6px; }
+    .hint { color: #444; font-size: 14px; margin: 8px 0 14px; }
+    .wrap { overflow: auto; border: 1px solid #ddd; border-radius: 8px; }
+    table { border-collapse: collapse; width: 100%; min-width: 700px; }
+    th, td { border: 1px solid #ddd; padding: 8px; vertical-align: top; }
+    th { background: #f6f6f6; position: sticky; top: 0; z-index: 1; }
+    td[contenteditable="true"] { background: #fffdf3; }
+    .status { margin-top: 10px; font-size: 14px; color: #0a5; }
+    .error { color: #b00; }
+  </style>
 </head>
 
 <body>
+  <h2>استيراد ملف Excel وإدخال/تعديل البيانات</h2>
 
-<div class="container">
-
-  <div class="tabs">
-    <button type="button" class="tab-btn active" onclick="setSheet('Brutes',this)">💧 Eaux Brutes</button>
-    <button type="button" class="tab-btn" onclick="setSheet('Traitées',this)">🧪 Eaux Traitées</button>
+  <div class="bar">
+    <input id="fileInput" type="file" accept=".xlsx,.xls,.csv" />
+    <button id="btnLoad">استيراد</button>
+    <button id="btnAddRow">إضافة صف</button>
+    <button id="btnAddCol">إضافة عمود</button>
+    <button id="btnExportXlsx">تصدير Excel</button>
+    <button id="btnExportCsv">تصدير CSV</button>
+    <button id="btnClear">مسح الجدول</button>
   </div>
 
-  <form id="waterForm">
-    <input type="hidden" id="sheetInput" value="Brutes">
+  <div class="hint">
+    • بعد الاستيراد: اضغط على أي خلية وعدّلها مباشرة.  
+    • يمكنك إضافة صف/عمود يدويًا ثم تصدير الملف من جديد.
+  </div>
 
-    <!-- Identification -->
-    <div class="section">
-      <span class="section-title">Identification</span>
-      <div class="grid">
-        <input name="N°=" placeholder="N°=" required>
-        <input name="Point de prélevement" placeholder="Point de prélevement">
-        <input name="Centre" placeholder="Centre">
-        <input name="Communes" placeholder="Communes">
-        <input type="date" name="Date">
-      </div>
-    </div>
+  <div class="wrap">
+    <table id="grid"></table>
+  </div>
 
-    <!-- Structure de l'eau -->
-    <div class="section">
-      <span class="section-title">Structure de l'eau</span>
-      <div class="grid">
-        <input name="Couleur" placeholder="Couleur">
-        <input type="number" step="0.1" name="Temp." placeholder="Temp.">
-        <input type="number" step="0.1" name="Cond." placeholder="Cond.">
-        <input type="number" step="0.1" name="Saliniré" placeholder="Saliniré">
-        <input type="number" step="0.1" name="TDS" placeholder="TDS">
-        <input type="number" step="0.01" name="Turbidité" placeholder="Turbidité">
-        <input type="number" step="0.1" name="pH" placeholder="pH">
-        <input type="number" step="0.1" name="RS" placeholder="RS">
-        <input type="number" step="0.1" name="MO" placeholder="MO">
-      </div>
-    </div>
+  <div id="msg" class="status"></div>
 
-    <!-- Chimie & Micropolluants -->
-    <div class="section">
-      <span class="section-title">Chimie & Micropolluants</span>
-      <div class="grid">
-        <input type="number" step="0.1" name="Calcium" placeholder="Calcium">
-        <input type="number" step="0.1" name="Dureté T" placeholder="Dureté T">
-        <input type="number" step="0.1" name="Magnésium" placeholder="Magnésium">
-        <input type="number" step="0.1" name="Sodium" placeholder="Sodium">
-        <input type="number" step="0.1" name="Potassium" placeholder="Potassium">
-        <input type="number" step="0.1" name="Ammonium" placeholder="Ammonium">
-        <input type="number" step="0.1" name="Nitrites" placeholder="Nitrites">
-        <input type="number" step="0.1" name="Nitrates" placeholder="Nitrates">
-        <input type="number" step="0.1" name="Phosphates" placeholder="Phosphates">
-        <input type="number" step="0.1" name="Chlorures" placeholder="Chlorures">
-        <input type="number" step="0.1" name="Alcalinité" placeholder="Alcalinité">
-        <input type="number" step="0.1" name="Bicarbonate" placeholder="Bicarbonate">
-        <input type="number" step="0.1" name="Sulfates" placeholder="Sulfates">
-        <input type="number" step="0.01" name="Fer total" placeholder="Fer total">
-        <input type="number" step="0.01" name="Manganèse" placeholder="Manganèse">
-        <input type="number" step="0.01" name="Aluminium" placeholder="Aluminium">
-      </div>
-    </div>
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const grid = document.getElementById('grid');
+    const msg = document.getElementById('msg');
 
-    <button class="btn btn-save" id="saveBtn">Enregistrer</button>
+    const setMsg = (text, isError=false) => {
+      msg.textContent = text || '';
+      msg.className = 'status' + (isError ? ' error' : '');
+    };
 
-    <div class="actions">
-      <button type="button" class="btn btn-download" onclick="downloadExcel()">⬇️ تحميل Excel</button>
-      <button type="button" class="btn btn-share" onclick="shareExcelFile()">📤 مشاركة Excel</button>
-    </div>
+    // بيانات الجدول كمصفوفة ثنائية (صفوف/أعمدة)
+    let data = [
+      ["الاسم", "الهاتف", "العنوان", "ملاحظات"],
+      ["", "", "", ""]
+    ];
 
-    <div id="status"></div>
-  </form>
+    function normalizeRectangular(aoa) {
+      const rows = aoa.length;
+      const cols = Math.max(...aoa.map(r => r.length), 0);
+      const out = Array.from({length: rows}, (_, i) =>
+        Array.from({length: cols}, (_, j) => (aoa[i][j] ?? ""))
+      );
+      return out;
+    }
 
-</div>
+    function renderTable() {
+      const rect = normalizeRectangular(data);
+      data = rect;
 
-<script>
-const SHEETBEST_BASE = "https://api.sheetbest.com/sheets/756a0cfa-f626-4c52-aa31-0e4362ee50b5";
+      grid.innerHTML = "";
 
-function setSheet(name, btn){
-  document.getElementById('sheetInput').value = name;
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-}
+      if (data.length === 0) return;
 
-function showStatus(msg, bg){
-  const status = document.getElementById('status');
-  status.style.display = 'block';
-  status.style.background = bg;
-  status.innerText = msg;
-}
+      // نفترض أول صف = عناوين (headers)
+      const thead = document.createElement('thead');
+      const trh = document.createElement('tr');
 
-function tabUrl(tabName){
-  return `${SHEETBEST_BASE}/tabs/${encodeURIComponent(tabName)}`;
-}
+      data[0].forEach((h, j) => {
+        const th = document.createElement('th');
+        th.textContent = (h ?? "").toString();
+        th.title = "عنوان العمود (يمكن تعديله)";
+        // اجعل العنوان قابلاً للتعديل أيضًا
+        th.contentEditable = "true";
+        th.addEventListener('input', () => {
+          data[0][j] = th.textContent;
+        });
+        trh.appendChild(th);
+      });
 
-/* ===== إرسال البيانات (حسب التبويب الحالي) ===== */
-document.getElementById('waterForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
+      thead.appendChild(trh);
+      grid.appendChild(thead);
 
-  const btn = document.getElementById('saveBtn');
-  btn.disabled = true;
+      const tbody = document.createElement('tbody');
 
-  showStatus('Envoi...', '#e8f0fe');
+      // باقي الصفوف بيانات قابلة للتعديل
+      for (let i = 1; i < data.length; i++) {
+        const tr = document.createElement('tr');
+        for (let j = 0; j < data[0].length; j++) {
+          const td = document.createElement('td');
+          td.contentEditable = "true";
+          td.textContent = (data[i][j] ?? "").toString();
 
-  const activeTab = document.getElementById('sheetInput').value; // Brutes / Traitées
-  const formData = new FormData(e.target);
-  const data = Object.fromEntries(formData.entries());
-  delete data.sheetInput;
+          td.addEventListener('input', () => {
+            data[i][j] = td.textContent;
+          });
 
-  try {
-    const res = await fetch(tabUrl(activeTab), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      }
+
+      grid.appendChild(tbody);
+    }
+
+    async function loadExcelFile(file) {
+      const arrayBuffer = await file.arrayBuffer();
+      const wb = XLSX.read(arrayBuffer, { type: "array" });
+
+      // أول ورقة
+      const sheetName = wb.SheetNames[0];
+      const ws = wb.Sheets[sheetName];
+
+      // تحويل لصفوف/أعمدة
+      const aoa = XLSX.utils.sheet_to_json(ws, {
+        header: 1,
+        defval: ""   // خانات فارغة تبقى ""
+      });
+
+      if (!aoa || aoa.length === 0) {
+        throw new Error("الملف فارغ أو لم يتم قراءة البيانات.");
+      }
+
+      data = aoa;
+      renderTable();
+    }
+
+    function addRow() {
+      if (data.length === 0) data = [["عمود 1"], [""]];
+      const cols = data[0].length || 1;
+      data.push(Array.from({length: cols}, () => ""));
+      renderTable();
+    }
+
+    function addCol() {
+      if (data.length === 0) data = [["عمود 1"], [""]];
+      data[0].push(`عمود ${data[0].length + 1}`);
+      for (let i = 1; i < data.length; i++) data[i].push("");
+      renderTable();
+    }
+
+    function exportXlsx() {
+      if (!data || data.length === 0) return setMsg("لا يوجد بيانات لتصديرها.", true);
+
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+
+      XLSX.writeFile(wb, "data.xlsx");
+      setMsg("تم تصدير ملف Excel بنجاح.");
+    }
+
+    function exportCsv() {
+      if (!data || data.length === 0) return setMsg("لا يوجد بيانات لتصديرها.", true);
+
+      const ws = XLSX.utils.aoa_to_sheet(data);
+      const csv = XLSX.utils.sheet_to_csv(ws);
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "data.csv";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+
+      setMsg("تم تصدير ملف CSV بنجاح.");
+    }
+
+    document.getElementById('btnLoad').addEventListener('click', async () => {
+      setMsg("");
+      const file = fileInput.files?.[0];
+      if (!file) return setMsg("اختر ملف Excel أو CSV أولاً.", true);
+
+      try {
+        await loadExcelFile(file);
+        setMsg(`تم الاستيراد: ${file.name}`);
+      } catch (e) {
+        setMsg(e.message || "حدث خطأ أثناء الاستيراد.", true);
+      }
     });
 
-    const text = await res.text();
-    if (!res.ok) {
-      showStatus(`❌ Erreur (${res.status}) : ${text}`, '#f8d7da');
-      return;
-    }
+    document.getElementById('btnAddRow').addEventListener('click', () => {
+      addRow();
+      setMsg("تمت إضافة صف.");
+    });
 
-    showStatus('✅ تم الحفظ بنجاح', '#d4edda');
-    e.target.reset();
+    document.getElementById('btnAddCol').addEventListener('click', () => {
+      addCol();
+      setMsg("تمت إضافة عمود.");
+    });
 
-  } catch (err) {
-    console.error(err);
-    showStatus('❌ Erreur réseau', '#f8d7da');
-  } finally {
-    btn.disabled = false;
-  }
-});
+    document.getElementById('btnExportXlsx').addEventListener('click', exportXlsx);
+    document.getElementById('btnExportCsv').addEventListener('click', exportCsv);
 
-/* ===== بناء Excel فيه شيتين (Brutes + Traitées) ===== */
-async function buildExcelBlobAllTabs(){
-  const [resB, resT] = await Promise.all([
-    fetch(tabUrl("Brutes")),
-    fetch(tabUrl("Traitées"))
-  ]);
+    document.getElementById('btnClear').addEventListener('click', () => {
+      data = [
+        ["الاسم", "الهاتف", "العنوان", "ملاحظات"],
+        ["", "", "", ""]
+      ];
+      renderTable();
+      setMsg("تمت إعادة ضبط الجدول.");
+    });
 
-  const [jsonB, jsonT] = await Promise.all([
-    resB.json(),
-    resT.json()
-  ]);
-
-  const wb = XLSX.utils.book_new();
-
-  const wsB = XLSX.utils.json_to_sheet(Array.isArray(jsonB) ? jsonB : []);
-  XLSX.utils.book_append_sheet(wb, wsB, "Brutes");
-
-  const wsT = XLSX.utils.json_to_sheet(Array.isArray(jsonT) ? jsonT : []);
-  XLSX.utils.book_append_sheet(wb, wsT, "Traitées");
-
-  const arrayBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-  return new Blob([arrayBuffer], {
-    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-  });
-}
-
-/* ===== تحميل Excel (شيتين) ===== */
-async function downloadExcel(){
-  showStatus('تحميل Excel (Brutes + Traitées)...', '#e8f0fe');
-  try{
-    const blob = await buildExcelBlobAllTabs();
-
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `Physico_data.xlsx`;
-    a.click();
-
-    showStatus('✅ تم تحميل ملف Excel', '#d4edda');
-  } catch(e){
-    console.error(e);
-    showStatus('❌ خطأ أثناء التحميل', '#f8d7da');
-  }
-}
-
-/* ===== مشاركة ملف Excel نفسه (شيتين) ===== */
-async function shareExcelFile(){
-  try{
-    showStatus('تحضير ملف Excel للمشاركة...', '#e8f0fe');
-
-    const blob = await buildExcelBlobAllTabs();
-    const file = new File([blob], `Physico_data.xlsx`, { type: blob.type });
-
-    if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
-      await navigator.share({
-        title: "Résultats Physico-Chimiques",
-        text: "ملف Excel (Brutes + Traitées)",
-        files: [file]
-      });
-      showStatus('✅ تم فتح المشاركة', '#d4edda');
-      return;
-    }
-
-    // fallback: تنزيل
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `Physico_data.xlsx`;
-    a.click();
-
-    showStatus('⚠️ جهازك لا يدعم مشاركة الملف مباشرة، تم تنزيله بدلًا من ذلك', '#fff3cd');
-
-  } catch(e){
-    console.error(e);
-    showStatus('❌ فشل إنشاء/مشاركة الملف', '#f8d7da');
-  }
-}
-</script>
-
+    // عرض جدول افتراضي عند فتح الصفحة
+    renderTable();
+  </script>
 </body>
 </html>
