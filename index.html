@@ -42,7 +42,7 @@ input { padding:8px; border:1px solid #ccc; border-radius:4px; }
   <input name="Point de prélevement" placeholder="Point de prélevement">
   <input name="Centre" placeholder="Centre">
   <input name="Communes" placeholder="Communes">
-  <input type="date" name="Date" placeholder="Date">
+  <input type="date" name="Date">
 </div>
 </div>
 
@@ -94,36 +94,51 @@ input { padding:8px; border:1px solid #ccc; border-radius:4px; }
 <script>
 const API_URL = 'https://sheetdb.io/api/v1/8ghol9vmi3z4h';
 
-function setSheet(name,btn){
-  document.getElementById('sheetInput').value=name;
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+function setSheet(name, btn){
+  document.getElementById('sheetInput').value = name;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
 }
 
-document.getElementById('waterForm').addEventListener('submit', async e=>{
+document.getElementById('waterForm').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const status=document.getElementById('status');
-  status.style.display='block';
-  status.style.background='#e8f0fe';
-  status.innerText='Envoi...';
 
-  const formData=new FormData(e.target);
-  const data=Object.fromEntries(formData.entries());
+  const status = document.getElementById('status');
+  status.style.display = 'block';
+  status.style.background = '#e8f0fe';
+  status.innerText = 'Envoi...';
 
-  try{
-    const res=await fetch(API_URL+'?sheet='+document.getElementById('sheetInput').value,{
-      method:'POST',
-      headers:{ 'Content-Type':'application/json' },
-      body:JSON.stringify({ data:[data] })
+  const sheet = document.getElementById('sheetInput').value;
+  const formData = new FormData(e.target);
+  const data = Object.fromEntries(formData.entries());
+
+  try {
+    // 🔐 تشفير اسم الورقة (Traitées فيها é)
+    const url = `${API_URL}?sheet=${encodeURIComponent(sheet)}`;
+
+    const res = await fetch(url, {
+      method: 'POST',
+      mode: 'cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: [data] })
     });
 
-    if(!res.ok) throw new Error();
-    status.style.background='#d4edda';
-    status.innerText='✅ تم الحفظ بنجاح';
+    const text = await res.text();
+
+    if (!res.ok) {
+      status.style.background = '#f8d7da';
+      status.innerText = `❌ Erreur (${res.status}) : ${text}`;
+      return;
+    }
+
+    status.style.background = '#d4edda';
+    status.innerText = '✅ تم الحفظ بنجاح';
     e.target.reset();
-  }catch{
-    status.style.background='#f8d7da';
-    status.innerText='❌ خطأ في الإرسال';
+
+  } catch (err) {
+    status.style.background = '#f8d7da';
+    status.innerText = '❌ Erreur réseau / CORS';
+    console.error(err);
   }
 });
 </script>
