@@ -46,7 +46,7 @@ input { padding:8px; border:1px solid #ccc; border-radius:4px; }
 </div>
 </div>
 
-<!-- Structure -->
+<!-- Structure de l'eau -->
 <div class="section">
 <span class="section-title">Structure de l'eau</span>
 <div class="grid">
@@ -62,7 +62,7 @@ input { padding:8px; border:1px solid #ccc; border-radius:4px; }
 </div>
 </div>
 
-<!-- Chimie -->
+<!-- Chimie & Micropolluants -->
 <div class="section">
 <span class="section-title">Chimie & Micropolluants</span>
 <div class="grid">
@@ -105,27 +105,30 @@ document.getElementById('waterForm').addEventListener('submit', async (e) => {
 
   const status = document.getElementById('status');
   status.style.display = 'block';
-  status.innerText = 'Envoi...';
   status.style.background = '#e8f0fe';
+  status.innerText = 'Envoi...';
 
   const sheet = document.getElementById('sheetInput').value;
   const formData = new FormData(e.target);
   const data = Object.fromEntries(formData.entries());
 
-  // 🔥 هذا هو السطر الحاسم
+  // ✅ لا ترسل هذا الحقل إلى SheetDB
   delete data.sheetInput;
 
   try {
+    // ✅ مهم لاسم Traitées (é)
     const url = `${API_URL}?sheet=${encodeURIComponent(sheet)}`;
 
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data: [data] })
+      // ✅ الصيغة الصحيحة (بدون Array)
+      body: JSON.stringify({ data: data })
     });
 
+    const text = await res.text();
+
     if (!res.ok) {
-      const text = await res.text();
       status.style.background = '#f8d7da';
       status.innerText = `❌ Erreur (${res.status}) : ${text}`;
       return;
