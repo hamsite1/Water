@@ -5,26 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Saisie Résultats Physico-Chimique 2025</title>
     <style>
-        :root { --primary: #1a73e8; --brutes: #e8f5e9; --traitees: #e3f2fd; }
+        :root { --primary: #1a73e8; --bg-brutes: #e8f5e9; --bg-traitees: #e3f2fd; }
         body { font-family: 'Segoe UI', sans-serif; background: #f1f3f4; margin: 0; padding: 10px; }
-        .container { max-width: 900px; margin: auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); overflow: hidden; }
+        .container { max-width: 900px; margin: auto; background: white; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden; }
         
-        .tabs { display: flex; background: #fff; border-bottom: 1px solid #ddd; }
-        .tab-btn { flex: 1; padding: 15px; border: none; background: #f8f9fa; cursor: pointer; font-weight: bold; border-bottom: 3px solid transparent; }
-        .tab-btn.active { border-bottom-color: var(--primary); background: white; color: var(--primary); }
+        .tabs { display: flex; background: #fff; border-bottom: 2px solid #ddd; }
+        .tab-btn { flex: 1; padding: 15px; border: none; background: #f8f9fa; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .tab-btn.active { border-bottom: 4px solid var(--primary); background: white; color: var(--primary); }
 
         form { padding: 20px; }
-        .section { margin-bottom: 20px; border: 1px solid #dadce0; border-radius: 8px; padding: 15px; }
-        .section-title { font-weight: bold; color: var(--primary); margin-bottom: 15px; display: block; font-size: 0.9rem; text-transform: uppercase; border-bottom: 1px solid #eee; }
+        .section { margin-bottom: 25px; border: 1px solid #dadce0; border-radius: 8px; padding: 15px; position: relative; }
+        .section-title { font-weight: bold; color: var(--primary); margin-bottom: 15px; display: block; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; }
 
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
         .field { display: flex; flex-direction: column; }
-        label { font-size: 11px; font-weight: 600; color: #5f6368; margin-bottom: 4px; }
-        input { padding: 10px; border: 1px solid #dadce0; border-radius: 4px; font-size: 14px; }
+        label { font-size: 11px; font-weight: 700; color: #5f6368; margin-bottom: 4px; }
+        input { padding: 10px; border: 1px solid #dadce0; border-radius: 5px; font-size: 14px; }
         input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 2px rgba(26,115,232,0.2); }
 
-        .submit-btn { width: 100%; padding: 16px; background: #188038; color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 20px; }
-        #status { text-align: center; padding: 15px; margin-top: 10px; border-radius: 5px; display: none; font-weight: bold; }
+        .submit-btn { width: 100%; padding: 18px; background: #188038; color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        #status { text-align: center; padding: 15px; margin-top: 15px; border-radius: 5px; display: none; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -39,17 +39,17 @@
         <input type="hidden" name="sheet" id="sheetInput" value="Brutes">
 
         <div class="section">
-            <span class="section-title">Informations de Base</span>
+            <span class="section-title">Identification</span>
             <div class="grid">
                 <div class="field"><label>N°=</label><input type="text" name="N°=" required></div>
                 <div class="field"><label>Point de prélevement</label><input type="text" name="Point de prélevement"></div>
                 <div class="field"><label>Centre</label><input type="text" name="Centre"></div>
                 <div class="field"><label>Communes</label><input type="text" name="Communes"></div>
-                <div class="field"><label>Date</label><input type="date" name="Date"></div>
+                <div class="field"><label>Date</label><input type="text" name="Date" placeholder="JJ/MM/AAAA"></div>
             </div>
         </div>
 
-        <div class="section" style="background: var(--brutes);">
+        <div class="section" style="background: var(--bg-brutes);">
             <span class="section-title">Structure de l'eau</span>
             <div class="grid">
                 <div class="field"><label>Couleur</label><input type="text" name="Couleur"></div>
@@ -64,8 +64,8 @@
             </div>
         </div>
 
-        <div class="section" style="background: var(--traitees);">
-            <span class="section-title">Chimie de l'eau</span>
+        <div class="section" style="background: var(--bg-traitees);">
+            <span class="section-title">Chimie de l'eau (Cations & Anions)</span>
             <div class="grid">
                 <div class="field"><label>Calcium</label><input type="number" step="0.1" name="Calcium"></div>
                 <div class="field"><label>Dureté T</label><input type="number" step="0.1" name="Dureté T"></div>
@@ -76,7 +76,7 @@
                 <div class="field"><label>Nitrites</label><input type="number" step="0.001" name="Nitrites"></div>
                 <div class="field"><label>Nitrates</label><input type="number" step="0.1" name="Nitrates"></div>
                 <div class="field"><label>Phosphates</label><input type="number" step="0.01" name="Phosphates"></div>
-                <div class="field"><label>Chlorures</label><input type="number" step="1" name="Chlorures"></div>
+                <div class="field"><label>Chlorures</label><input type="number" name="Chlorures"></div>
                 <div class="field"><label>Alcalinité</label><input type="number" step="0.1" name="Alcalinité"></div>
                 <div class="field"><label>Bicarbonate</label><input type="number" step="0.1" name="Bicarbonate"></div>
                 <div class="field"><label>Sulfates</label><input type="number" step="0.1" name="Sulfates"></div>
@@ -116,7 +116,7 @@
         btn.disabled = true;
         status.style.display = 'block';
         status.style.background = '#e8f0fe';
-        status.innerText = 'Synchronisation en cours...';
+        status.innerText = 'Synchronisation avec ' + sheet + '...';
 
         const formData = new FormData(e.target);
         const data = Object.fromEntries(formData.entries());
@@ -131,12 +131,12 @@
 
             if(response.ok) {
                 status.style.background = '#d4edda';
-                status.innerText = 'Données ajoutées avec succès ✅';
+                status.innerText = 'Données ajoutées avec succès dans ' + sheet + ' ✅';
                 e.target.reset();
             } else { throw new Error(); }
         } catch (err) {
             status.style.background = '#f8d7da';
-            status.innerText = 'Erreur: Vérifiez la connexion ❌';
+            status.innerText = 'Erreur de connexion ! ❌';
         } finally {
             btn.disabled = false;
         }
