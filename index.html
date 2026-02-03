@@ -121,25 +121,26 @@ function showStatus(msg, bg){
   status.innerText = msg;
 }
 
-function currentTabUrl(){
-  const sheet = document.getElementById('sheetInput').value;
-  return `${SHEETBEST_BASE}/tabs/${encodeURIComponent(sheet)}`;
+function tabUrl(tabName){
+  return `${SHEETBEST_BASE}/tabs/${encodeURIComponent(tabName)}`;
 }
 
-/* ===== إرسال البيانات ===== */
+/* ===== إرسال البيانات (حسب التبويب الحالي) ===== */
 document.getElementById('waterForm').addEventListener('submit', async (e) => {
   e.preventDefault();
 
   const btn = document.getElementById('saveBtn');
   btn.disabled = true;
+
   showStatus('Envoi...', '#e8f0fe');
 
+  const activeTab = document.getElementById('sheetInput').value; // Brutes / Traitées
   const formData = new FormData(e.target);
   const data = Object.fromEntries(formData.entries());
   delete data.sheetInput;
 
   try {
-    const res = await fetch(currentTabUrl(), {
+    const res = await fetch(tabUrl(activeTab), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data)
@@ -162,20 +163,25 @@ document.getElementById('waterForm').addEventListener('submit', async (e) => {
   }
 });
 
-/* ===== بناء ملف Excel كـ Blob ===== */
-async function buildExcelBlob(){
-  const res = await fetch(currentTabUrl());
-  const json = await res.json();
+/* ===== بناء Excel فيه شيتين (Brutes + Traitées) ===== */
+async function buildExcelBlobAllTabs(){
+  const [resB, resT] = await Promise.all([
+    fetch(tabUrl("Brutes")),
+    fetch(tabUrl("Traitées"))
+  ]);
 
-  if (!Array.isArray(json) || json.length === 0) {
-    throw new Error("EMPTY");
-  }
+  const [jsonB, jsonT] = await Promise.all([
+    resB.json(),
+    resT.json()
+  ]);
 
-  const sheetName = document.getElementById('sheetInput').value;
-
-  const ws = XLSX.utils.json_to_sheet(json);
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+
+  const wsB = XLSX.utils.json_to_sheet(Array.isArray(jsonB) ? jsonB : []);
+  XLSX.utils.book_append_sheet(wb, wsB, "Brutes");
+
+  const wsT = XLSX.utils.json_to_sheet(Array.isArray(jsonT) ? jsonT : []);
+  XLSX.utils.book_append_sheet(wb, wsT, "Traitées");
 
   const arrayBuffer = XLSX.write(wb, { bookType: "xlsx", type: "array" });
   return new Blob([arrayBuffer], {
@@ -183,63 +189,51 @@ async function buildExcelBlob(){
   });
 }
 
-/* ===== تحميل Excel ===== */
+/* ===== تحميل Excel (شيتين) ===== */
 async function downloadExcel(){
-  showStatus('تحميل Excel...', '#e8f0fe');
+  showStatus('تحميل Excel (Brutes + Traitées)...', '#e8f0fe');
   try{
-    const blob = await buildExcelBlob();
-    const sheetName = document.getElementById('sheetInput').value;
+    const blob = await buildExcelBlobAllTabs();
 
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `${sheetName}_data.xlsx`;
+    a.download = `Physico_data.xlsx`;
     a.click();
 
     showStatus('✅ تم تحميل ملف Excel', '#d4edda');
   } catch(e){
-    if (e.message === "EMPTY") {
-      showStatus('لا توجد بيانات للتحميل', '#fff3cd');
-      return;
-    }
     console.error(e);
     showStatus('❌ خطأ أثناء التحميل', '#f8d7da');
   }
 }
 
-/* ===== مشاركة ملف Excel نفسه ===== */
+/* ===== مشاركة ملف Excel نفسه (شيتين) ===== */
 async function shareExcelFile(){
-  const sheetName = document.getElementById('sheetInput').value;
-
   try{
     showStatus('تحضير ملف Excel للمشاركة...', '#e8f0fe');
 
-    const blob = await buildExcelBlob();
-    const file = new File([blob], `${sheetName}_data.xlsx`, { type: blob.type });
+    const blob = await buildExcelBlobAllTabs();
+    const file = new File([blob], `Physico_data.xlsx`, { type: blob.type });
 
-    // ✅ مشاركة ملف (Android/Chrome يدعمها غالباً)
     if (navigator.canShare && navigator.canShare({ files: [file] }) && navigator.share) {
       await navigator.share({
         title: "Résultats Physico-Chimiques",
-        text: `ملف Excel - ${sheetName}`,
+        text: "ملف Excel (Brutes + Traitées)",
         files: [file]
       });
       showStatus('✅ تم فتح المشاركة', '#d4edda');
       return;
     }
 
-    // ❌ إذا الجهاز لا يدعم مشاركة الملفات: ننزله بدلًا من ذلك
+    // fallback: تنزيل
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `${sheetName}_data.xlsx`;
+    a.download = `Physico_data.xlsx`;
     a.click();
 
     showStatus('⚠️ جهازك لا يدعم مشاركة الملف مباشرة، تم تنزيله بدلًا من ذلك', '#fff3cd');
 
   } catch(e){
-    if (e.message === "EMPTY") {
-      showStatus('لا توجد بيانات للمشاركة', '#fff3cd');
-      return;
-    }
     console.error(e);
     showStatus('❌ فشل إنشاء/مشاركة الملف', '#f8d7da');
   }
@@ -248,4 +242,3 @@ async function shareExcelFile(){
 
 </body>
 </html>
-```0
