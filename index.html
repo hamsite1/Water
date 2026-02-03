@@ -34,7 +34,6 @@ input { padding:8px; border:1px solid #ccc; border-radius:4px; }
 <form id="waterForm">
 <input type="hidden" id="sheetInput" value="Brutes">
 
-<!-- Identification -->
 <div class="section">
 <span class="section-title">Identification</span>
 <div class="grid">
@@ -46,7 +45,6 @@ input { padding:8px; border:1px solid #ccc; border-radius:4px; }
 </div>
 </div>
 
-<!-- Structure de l'eau -->
 <div class="section">
 <span class="section-title">Structure de l'eau</span>
 <div class="grid">
@@ -62,7 +60,6 @@ input { padding:8px; border:1px solid #ccc; border-radius:4px; }
 </div>
 </div>
 
-<!-- Chimie & Micropolluants -->
 <div class="section">
 <span class="section-title">Chimie & Micropolluants</span>
 <div class="grid">
@@ -112,23 +109,20 @@ document.getElementById('waterForm').addEventListener('submit', async (e) => {
   const formData = new FormData(e.target);
   const data = Object.fromEntries(formData.entries());
 
-  // ✅ لا ترسل هذا الحقل إلى SheetDB
+  // ❗️ لا ترسل هذا الحقل
   delete data.sheetInput;
 
   try {
-    // ✅ مهم لاسم Traitées (é)
     const url = `${API_URL}?sheet=${encodeURIComponent(sheet)}`;
 
     const res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      // ✅ الصيغة الصحيحة (بدون Array)
-      body: JSON.stringify({ data: data })
+      body: JSON.stringify({ data: [data] }) // ✅ الصيغة الصحيحة
     });
 
-    const text = await res.text();
-
     if (!res.ok) {
+      const text = await res.text();
       status.style.background = '#f8d7da';
       status.innerText = `❌ Erreur (${res.status}) : ${text}`;
       return;
