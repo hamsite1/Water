@@ -46,7 +46,7 @@ input { padding:8px; border:1px solid #ccc; border-radius:4px; }
 </div>
 </div>
 
-<!-- Structure de l'eau -->
+<!-- Structure -->
 <div class="section">
 <span class="section-title">Structure de l'eau</span>
 <div class="grid">
@@ -62,7 +62,7 @@ input { padding:8px; border:1px solid #ccc; border-radius:4px; }
 </div>
 </div>
 
-<!-- Chimie & Micropolluants -->
+<!-- Chimie -->
 <div class="section">
 <span class="section-title">Chimie & Micropolluants</span>
 <div class="grid">
@@ -105,27 +105,27 @@ document.getElementById('waterForm').addEventListener('submit', async (e) => {
 
   const status = document.getElementById('status');
   status.style.display = 'block';
-  status.style.background = '#e8f0fe';
   status.innerText = 'Envoi...';
+  status.style.background = '#e8f0fe';
 
   const sheet = document.getElementById('sheetInput').value;
   const formData = new FormData(e.target);
   const data = Object.fromEntries(formData.entries());
 
+  // 🔥 هذا هو السطر الحاسم
+  delete data.sheetInput;
+
   try {
-    // 🔐 تشفير اسم الورقة (Traitées فيها é)
     const url = `${API_URL}?sheet=${encodeURIComponent(sheet)}`;
 
     const res = await fetch(url, {
       method: 'POST',
-      mode: 'cors',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ data: [data] })
     });
 
-    const text = await res.text();
-
     if (!res.ok) {
+      const text = await res.text();
       status.style.background = '#f8d7da';
       status.innerText = `❌ Erreur (${res.status}) : ${text}`;
       return;
@@ -137,7 +137,7 @@ document.getElementById('waterForm').addEventListener('submit', async (e) => {
 
   } catch (err) {
     status.style.background = '#f8d7da';
-    status.innerText = '❌ Erreur réseau / CORS';
+    status.innerText = '❌ Erreur réseau';
     console.error(err);
   }
 });
