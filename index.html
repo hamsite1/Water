@@ -1,131 +1,132 @@
 <!DOCTYPE html>
 <html lang="fr" dir="ltr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Saisie Physico-Chimique 2025</title>
-    <style>
-        :root { --primary: #1a73e8; --success: #1e8e3e; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f1f3f4; margin: 0; padding: 10px; }
-        .container { max-width: 900px; margin: auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); overflow: hidden; }
-        .tabs { display: flex; background: #fff; border-bottom: 1px solid #ddd; }
-        .tab-btn { flex: 1; padding: 15px; border: none; background: #f8f9fa; cursor: pointer; font-weight: bold; border-bottom: 3px solid transparent; }
-        .tab-btn.active { border-bottom-color: var(--primary); background: white; color: var(--primary); }
-        form { padding: 20px; }
-        .section { margin-bottom: 20px; border: 1px solid #dadce0; border-radius: 8px; padding: 15px; }
-        .section-title { font-weight: bold; color: var(--primary); margin-bottom: 15px; display: block; font-size: 0.9rem; text-transform: uppercase; border-bottom: 1px solid #eee; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
-        .field { display: flex; flex-direction: column; }
-        label { font-size: 11px; font-weight: 600; color: #5f6368; margin-bottom: 4px; }
-        input { padding: 10px; border: 1px solid #dadce0; border-radius: 4px; font-size: 14px; }
-        .submit-btn { width: 100%; padding: 16px; background: var(--success); color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 20px; }
-        #status { text-align: center; padding: 15px; margin-top: 10px; border-radius: 5px; display: none; font-weight: bold; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Saisie Physico-Chimique 2025</title>
+
+<style>
+:root { --primary:#1a73e8; --success:#1e8e3e; }
+body { font-family: Arial, sans-serif; background:#f1f3f4; margin:0; padding:10px; }
+.container { max-width:900px; margin:auto; background:#fff; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,.1); }
+.tabs { display:flex; border-bottom:1px solid #ddd; }
+.tab-btn { flex:1; padding:14px; border:none; background:#f8f9fa; font-weight:bold; cursor:pointer; }
+.tab-btn.active { background:#fff; color:var(--primary); border-bottom:3px solid var(--primary); }
+form { padding:20px; }
+.section { margin-bottom:20px; border:1px solid #ddd; border-radius:8px; padding:15px; }
+.section-title { color:var(--primary); font-weight:bold; margin-bottom:10px; display:block; }
+.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:10px; }
+input { padding:8px; border:1px solid #ccc; border-radius:4px; }
+.submit-btn { width:100%; padding:16px; background:var(--success); color:#fff; border:none; border-radius:8px; font-size:1.1rem; font-weight:bold; cursor:pointer; }
+#status { display:none; margin-top:10px; padding:10px; text-align:center; border-radius:5px; font-weight:bold; }
+</style>
 </head>
+
 <body>
 
 <div class="container">
-    <div class="tabs">
-        <button class="tab-btn active" onclick="setSheet('Brutes', this)">💧 Eaux Brutes</button>
-        <button class="tab-btn" onclick="setSheet('Traitées', this)">🧪 Eaux Traitées</button>
-    </div>
 
-    <form id="waterForm">
-        <input type="hidden" name="sheet" id="sheetInput" value="Brutes">
+<div class="tabs">
+  <button class="tab-btn active" onclick="setSheet('Brutes',this)">💧 Eaux Brutes</button>
+  <button class="tab-btn" onclick="setSheet('Traitées',this)">🧪 Eaux Traitées</button>
+</div>
 
-        <div class="section">
-            <span class="section-title">Identification</span>
-            <div class="grid">
-                <div class="field"><label>N°=</label><input type="text" name="N°=" required></div>
-                <div class="field"><label>Point de prélevement</label><input type="text" name="Point de prélevement"></div>
-                <div class="field"><label>Centre</label><input type="text" name="Centre"></div>
-                <div class="field"><label>Communes</label><input type="text" name="Communes"></div>
-                <div class="field"><label>Date</label><input type="text" name="Date" placeholder="JJ/MM/AAAA"></div>
-            </div>
-        </div>
+<form id="waterForm">
+<input type="hidden" id="sheetInput" value="Brutes">
 
-        <div class="section">
-            <span class="section-title">Structure de l'eau</span>
-            <div class="grid">
-                <div class="field"><label>Couleur</label><input type="text" name="Couleur"></div>
-                <div class="field"><label>Temp.</label><input type="number" step="0.1" name="Temp."></div>
-                <div class="field"><label>Cond.</label><input type="number" name="Cond."></div>
-                <div class="field"><label>Saliniré</label><input type="number" step="0.1" name="Saliniré"></div>
-                <div class="field"><label>TDS</label><input type="number" name="TDS"></div>
-                <div class="field"><label>Turbidité</label><input type="number" step="0.01" name="Turbidité"></div>
-                <div class="field"><label>pH</label><input type="number" step="0.1" name="pH"></div>
-                <div class="field"><label>RS</label><input type="number" name="RS"></div>
-                <div class="field"><label>MO</label><input type="number" step="0.1" name="MO"></div>
-            </div>
-        </div>
+<!-- Identification -->
+<div class="section">
+<span class="section-title">Identification</span>
+<div class="grid">
+<input name="N°=" placeholder="N°" required>
+<input name="Point de prélevement" placeholder="Point de prélevement">
+<input name="Centre" placeholder="Centre">
+<input name="Communes" placeholder="Communes">
+<input type="date" name="Date">
+</div>
+</div>
 
-        <div class="section">
-            <span class="section-title">Chimie & Micropolluants</span>
-            <div class="grid">
-                <div class="field"><label>Calcium</label><input type="number" step="0.1" name="Calcium"></div>
-                <div class="field"><label>Dureté T</label><input type="number" step="0.1" name="Dureté T"></div>
-                <div class="field"><label>Magnésium</label><input type="number" step="0.1" name="Magnésium"></div>
-                <div class="field"><label>Sodium</label><input type="number" step="0.1" name="Sodium"></div>
-                <div class="field"><label>Nitrates</label><input type="number" step="0.1" name="Nitrates"></div>
-                <div class="field"><label>Chlorures</label><input type="number" name="Chlorures"></div>
-                <div class="field"><label>Sulfates</label><input type="number" step="0.1" name="Sulfates"></div>
-                <div class="field"><label>Fer total</label><input type="number" step="0.01" name="Fer total"></div>
-                <div class="field"><label>Aluminium</label><input type="number" step="0.01" name="Aluminium"></div>
-            </div>
-        </div>
+<!-- Structure de l'eau -->
+<div class="section">
+<span class="section-title">Structure de l'eau</span>
+<div class="grid">
+<input name="Couleur" placeholder="Couleur">
+<input type="number" step="0.1" name="Temp." placeholder="Temp.">
+<input type="number" step="0.1" name="Cond." placeholder="Cond.">
+<input type="number" step="0.1" name="Saliniré" placeholder="Saliniré">
+<input type="number" name="TDS">
+<input type="number" step="0.01" name="Turbidité">
+<input type="number" step="0.1" name="pH">
+<input type="number" name="RS">
+<input type="number" step="0.1" name="MO">
+</div>
+</div>
 
-        <button type="submit" class="submit-btn" id="subBtn">Enregistrer</button>
-        <div id="status"></div>
-    </form>
+<!-- Chimie & Micropolluants -->
+<div class="section">
+<span class="section-title">Chimie & Micropolluants</span>
+<div class="grid">
+<input type="number" step="0.1" name="Calcium">
+<input type="number" step="0.1" name="Dureté T">
+<input type="number" step="0.1" name="Magnésium">
+<input type="number" step="0.1" name="Sodium">
+<input type="number" step="0.1" name="Potassium">
+<input type="number" step="0.1" name="Ammonium">
+<input type="number" step="0.1" name="Nitrites">
+<input type="number" step="0.1" name="Nitrates">
+<input type="number" step="0.1" name="Phosphates">
+<input type="number" name="Chlorures">
+<input type="number" step="0.1" name="Alcalinité">
+<input type="number" step="0.1" name="Bicarbonate">
+<input type="number" step="0.1" name="Sulfates">
+<input type="number" step="0.01" name="Fer total">
+<input type="number" step="0.01" name="Manganèse">
+<input type="number" step="0.01" name="Aluminium">
+</div>
+</div>
+
+<button class="submit-btn">Enregistrer</button>
+<div id="status"></div>
+</form>
+
 </div>
 
 <script>
-    const API_URL = 'https://sheetdb.io/api/v1/9fjga7tgxfiy4';
+const API_URL = 'https://sheetdb.io/api/v1/8ghol9vmi3z4h';
 
-    function setSheet(name, btn) {
-        document.getElementById('sheetInput').value = name;
-        document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
-        btn.classList.add('active');
-    }
+function setSheet(name,btn){
+  document.getElementById('sheetInput').value=name;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
 
-    document.getElementById('waterForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const btn = document.getElementById('subBtn');
-        const status = document.getElementById('status');
-        const sheet = document.getElementById('sheetInput').value;
+document.getElementById('waterForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const status=document.getElementById('status');
+  status.style.display='block';
+  status.style.background='#e8f0fe';
+  status.innerText='Envoi...';
 
-        btn.disabled = true;
-        status.style.display = 'block';
-        status.style.background = '#e8f0fe';
-        status.innerText = 'Envoi vers ' + sheet + '...';
+  const formData=new FormData(e.target);
+  const data=Object.fromEntries(formData.entries());
 
-        const formData = new FormData(e.target);
-        const data = Object.fromEntries(formData.entries());
-        delete data.sheet;
-
-        try {
-            const response = await fetch(`${API_URL}?sheet=${sheet}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ data: [data] })
-            });
-
-            if(response.ok) {
-                status.style.background = '#d4edda';
-                status.innerText = 'Succès ! Données ajoutées ✅';
-                e.target.reset();
-            } else {
-                const errData = await response.json();
-                console.error(errData);
-                throw new Error();
-            }
-        } catch (err) {
-            status.style.background = '#f8d7da';
-            status.innerText = 'Erreur: Vérifiez les titres des colonnes ❌';
-        } finally {
-            btn.disabled = false;
-        }
+  try{
+    const res=await fetch(API_URL+'?sheet='+document.getElementById('sheetInput').value,{
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body:JSON.stringify({ data:[data] })
     });
+
+    if(!res.ok) throw new Error();
+    status.style.background='#d4edda';
+    status.innerText='✅ تم الحفظ بنجاح';
+    e.target.reset();
+  }catch{
+    status.style.background='#f8d7da';
+    status.innerText='❌ خطأ في الإرسال';
+  }
+});
 </script>
+
 </body>
 </html>
